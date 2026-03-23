@@ -1,10 +1,12 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useUIStore } from '@/stores/ui-store';
+import { AuthProvider } from '@/hooks/use-auth';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 import Landing from './pages/Landing';
@@ -45,30 +47,34 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppInit />
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+        <AuthProvider>
+          <AppInit />
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Protected routes (wrapped in AppLayout with sidebar) */}
-          <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/learn" element={<Learn />} />
-            <Route path="/learn/new" element={<LearnNew />} />
-            <Route path="/learn/:slug" element={<LessonViewer />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/chat/:id" element={<Chat />} />
-            <Route path="/code" element={<CodePage />} />
-            <Route path="/videos" element={<Videos />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </Route>
+            {/* Protected routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/learn" element={<Learn />} />
+                <Route path="/learn/new" element={<LearnNew />} />
+                <Route path="/learn/:slug" element={<LessonViewer />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/chat/:id" element={<Chat />} />
+                <Route path="/code" element={<CodePage />} />
+                <Route path="/videos" element={<Videos />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
+            </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
