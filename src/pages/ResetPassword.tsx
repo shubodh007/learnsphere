@@ -1,21 +1,58 @@
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GraduationCap, Mail } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GraduationCap, Mail, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function ResetPassword() {
   const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [isRecovery, setIsRecovery] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { resetPassword, updatePassword } = useAuth();
+  const navigate = useNavigate();
 
-  const handleReset = (e: React.FormEvent) => {
+  useEffect(() => {
+    // Detect recovery token in URL hash (Supabase redirects with #type=recovery)
+    const hash = window.location.hash;
+    if (hash.includes('type=recovery')) {
+      setIsRecovery(true);
+    }
+  }, []);
+
+  const handleSendReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: 'Backend not connected', description: 'Enable Lovable Cloud to reset passwords.', variant: 'destructive' });
+    setLoading(true);
+    const { error } = await resetPassword(email);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Email sent', description: 'Check your inbox for a password reset link.' });
+    }
+    setLoading(false);
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast({ title: 'Password too short', description: 'Must be at least 8 characters.', variant: 'destructive' });
+      return;
+    }
+    setLoading(true);
+    const { error } = await updatePassword(newPassword);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Password updated', description: 'You can now sign in with your new password.' });
+      navigate('/login');
+    }
+    setLoading(false);
   };
 
   return (
@@ -27,25 +64,46 @@ export default function ResetPassword() {
           </div>
           <span className="text-xl font-bold text-foreground">LearnSphere AI</span>
         </div>
+
         <Card className="bg-card border-border">
           <CardHeader className="text-center">
-            <CardTitle>Reset Password</CardTitle>
+            <CardTitle>{isRecovery ? 'Set New Password' : 'Reset Password'}</CardTitle>
           </CardHeader>
-          <form onSubmit={handleReset}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" placeholder="you@example.com" required />
+
+          {isRecovery ? (
+            <form onSubmit={handleUpdatePassword}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>New Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input type="password" placeholder="Min 8 characters" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="pl-10" required />
+                  </div>
                 </div>
-              </div>
-              <Button type="submit" className="w-full gradient-bg border-0">Send Reset Link</Button>
-              <p className="text-center text-sm text-muted-foreground">
-                <Link to="/login" className="text-primary hover:underline">Back to login</Link>
-              </p>
-            </CardContent>
-          </form>
+                <Button type="submit" className="w-full gradient-bg border-0" disabled={loading}>
+                  {loading ? 'Updating...' : 'Update Password'}
+                </Button>
+              </CardContent>
+            </form>
+          ) : (
+            <form onSubmit={handleSendReset}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" placeholder="you@example.com" required />
+                  </div>
+                </div>
+                <Button type="submit" className="w-full gradient-bg border-0" disabled={loading}>
+                  {loading ? 'Sending...' : 'Send Reset Link'}
+                </Button>
+                <p className="text-center text-sm text-muted-foreground">
+                  <Link to="/login" className="text-primary hover:underline">Back to login</Link>
+                </p>
+              </CardContent>
+            </form>
+          )}
         </Card>
       </motion.div>
     </div>
