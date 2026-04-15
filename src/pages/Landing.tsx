@@ -24,11 +24,12 @@ import {
 } from 'lucide-react';
 import './Landing.css';
 
-// Lazy load frame modules - don't load eagerly
+type FrameLoader = () => Promise<{ default: string }>;
+
+// Keep frames lazy, but sort them deterministically and use loader functions directly.
 const frameModules = import.meta.glob('../AI_energy_crystallizing_202604051220_000/*.jpg', { eager: false });
-const frameUrls = Object.keys(frameModules)
-  .sort()
-  .map((k) => k);
+const sortedFrameEntries = Object.entries(frameModules).sort(([a], [b]) => a.localeCompare(b));
+const frameLoaders = sortedFrameEntries.map(([, loader]) => loader as FrameLoader);
 
 
 /* ────────────────────────────────────────────────────────────────
@@ -271,11 +272,18 @@ export default function Landing() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [framesLoaded, setFramesLoaded] = useState(false);
   const [showPreloader, setShowPreloader] = useState(true);
+  const [mobileFrameUrl, setMobileFrameUrl] = useState<string | null>(null);
   const framesArrayRef = useRef<HTMLImageElement[]>([]);
   const isMobile = window.innerWidth < 768; // Initial check
 
   useEffect(() => {
     if (isMobile) {
+      const firstFrameLoader = frameLoaders[0];
+      if (firstFrameLoader) {
+        firstFrameLoader()
+          .then((mod) => setMobileFrameUrl(mod.default))
+          .catch(() => setMobileFrameUrl(null));
+      }
       setShowPreloader(false);
       return;
     }
@@ -283,21 +291,24 @@ export default function Landing() {
     // Defer frame loading to after page is interactive using requestIdleCallback
     const loadFrames = () => {
       Promise.all(
-        frameUrls.map((modulePath) => {
+        frameLoaders.map((loadFrame) => {
           return new Promise<HTMLImageElement>((resolve) => {
             const img = new Image();
             img.onload = () => resolve(img);
             img.onerror = () => resolve(img);
-            // Dynamically import the module
-            import(/* @vite-ignore */ modulePath).then((mod) => {
-              img.src = mod.default || modulePath;
+            loadFrame().then((mod) => {
+              img.src = mod.default;
             }).catch(() => {
               resolve(img); // Resolve anyway if import fails
             });
           });
         })
       ).then((images) => {
-        framesArrayRef.current = images.filter((img) => img.naturalWidth > 0);
+        const validFrames = images.filter((img) => img.naturalWidth > 0);
+        framesArrayRef.current = validFrames;
+        if (validFrames.length > 0) {
+          setMobileFrameUrl(validFrames[0].src);
+        }
         setFramesLoaded(true);
         setTimeout(() => setShowPreloader(false), 400);
 
@@ -491,8 +502,8 @@ export default function Landing() {
         </>
       )}
       
-      {isMobile && frameUrls.length > 0 && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 0, backgroundImage: `url(${frameUrls[0]})`, backgroundSize: 'cover', backgroundPosition: 'center', pointerEvents: 'none' }} />
+      {isMobile && mobileFrameUrl && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 0, backgroundImage: `url(${mobileFrameUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', pointerEvents: 'none' }} />
       )}
 
 
