@@ -6,7 +6,7 @@ export function AppLayout() {
   const { sidebarOpen } = useUIStore();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen luminous-canvas text-foreground">
       <AppSidebar />
       <main
         className="transition-all duration-300 pb-16 md:pb-0"

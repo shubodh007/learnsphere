@@ -1,0 +1,40 @@
+# Supabase configuration for LearnSphere AI
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+# Edge Functions configuration
+[functions.generate-code]
+verify_jwt = false
+
+[functions.generate-lesson]
+verify_jwt = false
+
+[functions.chat]
+verify_jwt = false
+
+[functions.youtube-search]
+verify_jwt = false
+
+[functions.generate-quiz]
+verify_jwt = false

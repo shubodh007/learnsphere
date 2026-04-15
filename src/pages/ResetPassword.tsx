@@ -56,7 +56,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center luminous-canvas p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg gradient-bg">
@@ -65,7 +65,7 @@ export default function ResetPassword() {
           <span className="text-xl font-bold text-foreground">LearnSphere AI</span>
         </div>
 
-        <Card className="bg-card border-border">
+        <Card className="luminous-surface border-white/10">
           <CardHeader className="text-center">
             <CardTitle>{isRecovery ? 'Set New Password' : 'Reset Password'}</CardTitle>
           </CardHeader>

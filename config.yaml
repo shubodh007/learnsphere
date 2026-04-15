@@ -1,0 +1,100 @@
+model_list:
+  # Coding-focused free model aliases (Sonnet slot)
+  - model_name: sonnet-4.6
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: claude-sonnet-4-6
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: claude-sonnet-4.6
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: claude-code
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  # Reasoning-focused free model aliases (Opus slot)
+  - model_name: opus-4.6
+    litellm_params:
+      model: openrouter/qwen/qwen3.6-plus:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: claude-opus-4-6
+    litellm_params:
+      model: openrouter/qwen/qwen3.6-plus:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: claude-opus-4.6
+    litellm_params:
+      model: openrouter/qwen/qwen3.6-plus:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  # All-rounder free model aliases (Haiku slot)
+  - model_name: haiku-4.5
+    litellm_params:
+      model: openrouter/minimax/minimax-m2.5:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: claude-haiku-4-5
+    litellm_params:
+      model: openrouter/minimax/minimax-m2.5:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: claude-haiku-4.5
+    litellm_params:
+      model: openrouter/minimax/minimax-m2.5:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  # Compatibility aliases
+  - model_name: claude-3-5-sonnet
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: claude-3-7-sonnet
+    litellm_params:
+      model: openrouter/qwen/qwen3.6-plus:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: fast-free
+    litellm_params:
+      model: openrouter/liquid/lfm-2.5-1.2b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: smart-free
+    litellm_params:
+      model: openrouter/minimax/minimax-m2.5:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: reasoning-free
+    litellm_params:
+      model: openrouter/qwen/qwen3.6-plus:free
+      api_key: os.environ/OPENROUTER_API_KEY
+      api_base: https://openrouter.ai/api/v1
+
+general_settings:
+  master_key: sk-localproxy
+
+litellm_settings:
+  set_verbose: true

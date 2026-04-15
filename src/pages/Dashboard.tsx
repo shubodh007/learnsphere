@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, MessageSquare, Code2, Video, Flame, Clock, Trophy, Zap } from 'lucide-react';
+import { BookOpen, MessageSquare, Code2, Video, Flame, Clock, Zap, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { EmptyState, emptyStateConfig } from '@/components/EmptyState';
+import { useAuth } from '@/hooks/use-auth';
+import { useDashboardStatsQuery } from '@/hooks/use-queries';
 
 const quickActions = [
   { to: '/learn/new', icon: BookOpen, label: 'Generate Lesson', color: 'from-blue-500 to-blue-600' },
@@ -19,8 +21,76 @@ const container = {
 const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 export default function Dashboard() {
-  // Placeholder stats - will be fetched from Supabase
-  const hasActivity = false;
+  const { user } = useAuth();
+  const { data: dashboardData, isLoading, error } = useDashboardStatsQuery(user?.id);
+
+  const stats = dashboardData || {
+    lessonsCompleted: 0,
+    currentStreak: 0,
+    timeSpentMinutes: 0,
+    codeGenerated: 0,
+    recentActivity: [],
+  };
+
+  const formatTime = (minutes: number): string => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
+
+  const formatActivityTime = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
+
+  const getActivityLabel = (type: string): string => {
+    switch (type) {
+      case 'lesson_generated': return 'Generated a lesson';
+      case 'chat_message': return 'Chatted with AI';
+      case 'code_generated': return 'Generated code';
+      case 'video_watched': return 'Watched a video';
+      default: return 'Activity';
+    }
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'lesson_generated': return BookOpen;
+      case 'chat_message': return MessageSquare;
+      case 'code_generated': return Code2;
+      case 'video_watched': return Video;
+      default: return Zap;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('Error fetching dashboard data:', error);
+  }
+
+  const statsData = [
+    { icon: BookOpen, label: 'Lessons', value: stats.lessonsCompleted.toString(), subtext: 'completed' },
+    { icon: Flame, label: 'Streak', value: stats.currentStreak.toString(), subtext: 'days' },
+    { icon: Clock, label: 'Time Spent', value: formatTime(stats.timeSpentMinutes), subtext: 'total' },
+    { icon: Zap, label: 'Code Generated', value: stats.codeGenerated.toString(), subtext: 'snippets' },
+  ];
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -31,12 +101,7 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { icon: BookOpen, label: 'Lessons', value: '0', subtext: 'completed' },
-          { icon: Flame, label: 'Streak', value: '0', subtext: 'days' },
-          { icon: Clock, label: 'Time Spent', value: '0h', subtext: 'total' },
-          { icon: Zap, label: 'Code Generated', value: '0', subtext: 'snippets' },
-        ].map((stat) => (
+        {statsData.map((stat) => (
           <motion.div key={stat.label} variants={item}>
             <Card className="bg-card border-border">
               <CardContent className="p-4">
@@ -79,10 +144,23 @@ export default function Dashboard() {
       {/* Recent Activity */}
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-3">Recent Activity</h2>
-        {hasActivity ? (
+        {stats.recentActivity.length > 0 ? (
           <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              {/* Activity items will go here */}
+            <CardContent className="p-4 space-y-3">
+              {stats.recentActivity.map((activity) => {
+                const Icon = getActivityIcon(activity.activity_type);
+                return (
+                  <div key={activity.id} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">{getActivityLabel(activity.activity_type)}</p>
+                      <p className="text-xs text-muted-foreground">{formatActivityTime(activity.created_at)}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         ) : (

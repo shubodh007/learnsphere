@@ -1,0 +1,50 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(182 142) rotate(90) scale(90)">
+      <stop stop-color="#C4B5FD"/>
+      <stop offset="1" stop-color="#7C3AED" stop-opacity="0.1"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(992 212) rotate(90) scale(96)">
+      <stop stop-color="#93C5FD"/>
+      <stop offset="1" stop-color="#3B82F6" stop-opacity="0.1"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="182" cy="142" r="78" fill="url(#g1)" fill-opacity="0.28"/>
+  <circle cx="992" cy="212" r="82" fill="url(#g2)" fill-opacity="0.28"/>
+
+  <g transform="translate(140 114)" opacity="0.92">
+    <circle cx="44" cy="44" r="42" stroke="#C4B5FD" stroke-width="3"/>
+    <circle cx="44" cy="44" r="10" fill="#93C5FD"/>
+    <circle cx="66" cy="22" r="6" fill="#A855F7"/>
+  </g>
+
+  <g transform="translate(330 396)" opacity="0.9">
+    <path d="M74 18L88 54L124 68L88 82L74 118L60 82L24 68L60 54L74 18Z" fill="#2563EB"/>
+    <path d="M74 34L84 58L108 68L84 78L74 102L64 78L40 68L64 58L74 34Z" fill="#BFDBFE"/>
+  </g>
+
+  <g transform="translate(570 130)" opacity="0.94">
+    <path d="M64 8C96 8 120 34 120 66C120 92 102 114 78 120L64 148L50 120C26 114 8 92 8 66C8 34 32 8 64 8Z" fill="#312E81" stroke="#93C5FD" stroke-width="3"/>
+    <rect x="56" y="38" width="16" height="42" rx="8" fill="#E0E7FF"/>
+    <circle cx="64" cy="96" r="9" fill="#E0E7FF"/>
+  </g>
+
+  <g transform="translate(886 430)" opacity="0.92">
+    <path d="M92 16L112 56H168L122 84L140 136L92 102L44 136L62 84L16 56H72L92 16Z" fill="#1D4ED8"/>
+    <path d="M92 36L104 60H130L108 74L116 100L92 84L68 100L76 74L54 60H80L92 36Z" fill="#DBEAFE"/>
+  </g>
+
+  <g transform="translate(952 98)" opacity="0.93">
+    <circle cx="60" cy="60" r="52" stroke="#C4B5FD" stroke-width="3"/>
+    <line x1="8" y1="60" x2="112" y2="60" stroke="#C4B5FD" stroke-width="3"/>
+    <line x1="60" y1="8" x2="60" y2="112" stroke="#C4B5FD" stroke-width="3"/>
+    <circle cx="60" cy="60" r="22" stroke="#93C5FD" stroke-width="3"/>
+  </g>
+
+  <g transform="translate(720 522)" opacity="0.9">
+    <rect x="20" y="24" width="120" height="90" rx="10" fill="#1E1B4B" stroke="#60A5FA" stroke-width="3"/>
+    <path d="M20 40H140" stroke="#60A5FA" stroke-width="3"/>
+    <path d="M56 24V114" stroke="#60A5FA" stroke-width="3"/>
+  </g>
+</svg>

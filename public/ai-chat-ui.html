@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neural Networks Explained — Premium AI Chat UI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       GLOBAL RESET & THEME
+       ═══════════════════════════════════════════════════════════════════════ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      /* Backgrounds */
+      --bg-pure-black: #000000;
+      --bg-surface-1: #0a0a0a;
+      --bg-surface-2: #1e1e1e;
+      --bg-surface-3: #252526;
+      --bg-border: #2d2d2d;
+      --bg-border-light: #27272a;
+
+      /* Text */
+      --text-primary: #e4e4e7;
+      --text-heading: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-tertiary: #63636e;
+      --text-pure-white: #ffffff;
+
+      /* Accents */
+      --accent-blue: #60a5fa;
+      --accent-purple: #a78bfa;
+      --accent-green: #34d399;
+      --accent-cyan: #22d3ee;
+      --accent-orange: #fb923c;
+      --accent-pink: #f472b6;
+      --accent-red: #f87171;
+
+      /* Code colors (VS Code Dark+) */
+      --code-keyword: #569cd6;
+      --code-control: #c586c0;
+      --code-string: #ce9178;
+      --code-number: #b5cea8;
+      --code-comment: #6a9955;
+      --code-function: #dcdcaa;
+      --code-class: #4ec9b0;
+      --code-variable: #9cdcfe;
+      --code-operator: #d4d4d4;
+      --code-punctuation: #d4d4d4;
+
+      /* Animation */
+      --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+      background: var(--bg-pure-black);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Subtle radial glow at top */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1200px;
+      height: 600px;
+      background: radial-gradient(ellipse at center, rgba(96, 165, 250, 0.035) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #2a2a2a;
+      border-radius: 10px;
+      transition: background 0.15s ease;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3a3a3a;
+    }
+
+    /* Text Selection */
+    ::selection {
+      background: rgba(96, 165, 250, 0.28);
+      color: var(--text-pure-white);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       PAGE LAYOUT
+       ═══════════════════════════════════════════════════════════════════════ */
+    .page-container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 48px 28px 120px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       MESSAGE BLOCK
+       ═══════════════════════════════════════════════════════════════════════ */
+    .message-block {
+      display: flex;
+      flex-direction: row;
+      gap: 22px;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: messageEntrance 0.6s var(--ease-premium) forwards;
+    }
+
+    @keyframes messageEntrance {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* AI Avatar */
+    .ai-avatar {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(96, 165, 250, 0.3);
+      position: sticky;
+      top: 28px;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .ai-avatar:hover {
+      box-shadow: 0 4px 16px rgba(96, 165, 250, 0.45);
+    }
+
+    .ai-avatar svg {
+      width: 18px;
+      height: 18px;
+      fill: white;
+    }
+
+    /* Message Content */
+    .message-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Staggered entrance for content children */
+    .message-content > * {
+      opacity: 0;
+      transform: translateY(6px);
+      animation: contentFadeIn 0.4s var(--ease-premium) forwards;
+      animation-fill-mode: both;
+    }
+
+    .message-content > *:nth-child(1) { animation-delay: 0.02s; }
+    .message-content > *:nth-child(2) { animation-delay: 0.06s; }
+    .message-content > *:nth-child(3) { animation-delay: 0.10s; }
+    .message-content > *:nth-child(4) { animation-delay: 0.14s; }
+    .message-content > *:nth-child(5) { animation-delay: 0.18s; }
+    .message-content > *:nth-child(6) { animation-delay: 0.22s; }
+    .message-content > *:nth-child(7) { animation-delay: 0.26s; }
+    .message-content > *:nth-child(8) { animation-delay: 0.30s; }
+    .message-content > *:nth-child(9) { animation-delay: 0.34s; }
+    .message-content > *:nth-child(10) { animation-delay: 0.38s; }
+    .message-content > *:nth-child(n+11) { animation-delay: 0.40s; }
+
+    @keyframes contentFadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       TYPOGRAPHY
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    /* H1 - Main Title */
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, #ffffff 0%, #e4e4e7 50%, #60a5fa 100%);
+      background-size: 200% 100%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: titleShimmer 1.5s ease-out forwards;
+    }
+
+    @keyframes titleShimmer {
+      from { background-position: 200% 0; }
+      to { background-position: 0% 0; }
+    }
+
+    /* H2 - Section Heading */
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 650;
+      color: var(--text-heading);
+      letter-spacing: -0.02em;
+      line-height: 1.35;
+      margin-top: 40px;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--bg-surface-2);
+      position: relative;
+    }
+
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 2px;
+      animation: h2BarGrow 0.6s ease-out 0.2s forwards;
+    }
+
+    @keyframes h2BarGrow {
+      to { width: 50px; }
+    }
+
+    /* H3 - Sub-heading */
+    h3 {
+      font-size: 1.08rem;
+      font-weight: 600;
+      color: var(--text-heading);
+      margin-top: 28px;
+      margin-bottom: 12px;
+    }
+
+    /* Paragraphs */
+    p {
+      line-height: 1.78;
+      margin-bottom: 14px;
+      color: var(--text-primary);
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Bold */
+    strong {
+      color: var(--text-pure-white);
+      font-weight: 600;
+    }
+
+    /* Italic */
+    em {
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* Links */
+    a {
+      color: var(--accent-blue);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(96, 165, 250, 0.25);
+      transition: border-color 0.15s ease, text-shadow 0.15s ease;
+    }
+
+    a:hover {
+      border-color: var(--accent-blue);
+      text-shadow: 0 0 14px rgba(96, 165, 250, 0.25);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       LISTS
+       ═══════════════════════════════════════════════════════════════════════ */
+    ol, ul {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 14px;
+    }
+
+    /* Ordered Lists */
+    ol {
+      counter-reset: list-counter;
+    }
+
+    ol > li {
+      counter-increment: list-counter;
+      position: relative;
+      padding-left: 30px;
+      margin-bottom: 10px;
+      line-height: 1.75;
+    }
+
+    ol > li::before {
+      content: counter(list-counter) ".";
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+      font-size: 0.88em;
+      color: var(--accent-blue);
+      font-variant-numeric: tabular-nums;
+      min-width: 22px;
+      text-align: right;
+      opacity: 0;
+      transform: scale(0.5);
+      animation: numberPop 0.4s var(--ease-premium) forwards;
+    }
+
+    ol > li:nth-child(1)::before { animation-delay: 0.05s; }
+    ol > li:nth-child(2)::before { animation-delay: 0.1s; }
+    ol > li:nth-child(3)::before { animation-delay: 0.15s; }
+    ol > li:nth-child(4)::before { animation-delay: 0.2s; }
+    ol > li:nth-child(5)::before { animation-delay: 0.25s; }
+
+    @keyframes numberPop {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Unordered Lists */
+    ul > li {
+      position: relative;
+      padding-left: 30px;
+      margin-bottom: 10px;
+      line-height: 1.75;
+    }
+
+    ul > li::before {
+      content: '';
+      position: absolute;
+      left: 9px;
+      top: 12px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      box-shadow: 0 0 6px rgba(96, 165, 250, 0.3);
+      opacity: 0;
+      transform: scale(0);
+      animation: bulletPop 0.4s var(--ease-premium) forwards;
+    }
+
+    ul > li:nth-child(1)::before { animation-delay: 0.05s; }
+    ul > li:nth-child(2)::before { animation-delay: 0.13s; }
+    ul > li:nth-child(3)::before { animation-delay: 0.21s; }
+    ul > li:nth-child(4)::before { animation-delay: 0.29s; }
+    ul > li:nth-child(5)::before { animation-delay: 0.37s; }
+
+    @keyframes bulletPop {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Nested Lists - Second Level */
+    li > ul, li > ol {
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+
+    li > ul > li::before {
+      width: 4px;
+      height: 4px;
+      border-radius: 1px;
+      background: var(--accent-purple);
+      box-shadow: 0 0 6px rgba(167, 139, 250, 0.3);
+    }
+
+    /* Nested Lists - Third Level */
+    li > ul > li > ul > li::before {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 6px rgba(34, 211, 238, 0.3);
+    }
+
+    /* List Item Animation */
+    li {
+      opacity: 0;
+      transform: translateX(-10px);
+      animation: listItemSlide 0.45s var(--ease-premium) forwards;
+    }
+
+    li:nth-child(1) { animation-delay: 0.08s; }
+    li:nth-child(2) { animation-delay: 0.16s; }
+    li:nth-child(3) { animation-delay: 0.24s; }
+    li:nth-child(4) { animation-delay: 0.32s; }
+    li:nth-child(5) { animation-delay: 0.4s; }
+
+    @keyframes listItemSlide {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       INLINE CODE
+       ═══════════════════════════════════════════════════════════════════════ */
+    code:not(pre code) {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84em;
+      font-weight: 500;
+      padding: 2.5px 7px;
+      background: rgba(110, 118, 129, 0.22);
+      border: 1px solid rgba(110, 118, 129, 0.12);
+      border-radius: 5px;
+      color: #79c0ff;
+      white-space: nowrap;
+      transition: background 0.15s ease;
+      animation: inlineCodeFlash 0.3s ease-out;
+    }
+
+    code:not(pre code):hover {
+      background: rgba(110, 118, 129, 0.32);
+    }
+
+    @keyframes inlineCodeFlash {
+      0% { background: rgba(110, 118, 129, 0.4); }
+      100% { background: rgba(110, 118, 129, 0.22); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       CODE BLOCKS
+       ═══════════════════════════════════════════════════════════════════════ */
+    .code-block-wrapper {
+      margin: 22px 0;
+      border-radius: 10px;
+      border: 1px solid #2d2d2d;
+      background: #1e1e1e;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      position: relative;
+      opacity: 0;
+      transform: scale(0.97);
+      animation: codeBlockEntrance 0.5s var(--ease-premium) forwards;
+      transition: border-color 0.35s ease-out, box-shadow 0.35s ease-out, transform 0.35s ease-out;
+    }
+
+    .code-block-wrapper::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(167, 139, 250, 0.1));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.35s ease-out;
+      pointer-events: none;
+    }
+
+    .code-block-wrapper:hover {
+      border-color: rgba(96, 165, 250, 0.18);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 25px rgba(96, 165, 250, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .code-block-wrapper:hover::before {
+      opacity: 1;
+    }
+
+    @keyframes codeBlockEntrance {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Code Header */
+    .code-header {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px 0 16px;
+      background: #252526;
+      border-bottom: 1px solid #2d2d2d;
+    }
+
+    .code-language {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.73rem;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      text-transform: lowercase;
+      letter-spacing: 0.03em;
+    }
+
+    .code-language::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 6px rgba(52, 211, 153, 0.5);
+      animation: statusPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Copy Button */
+    .copy-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border: none;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-tertiary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    }
+
+    .copy-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+    }
+
+    .copy-button:active {
+      transform: scale(0.94);
+    }
+
+    .copy-button svg {
+      width: 13px;
+      height: 13px;
+      transition: opacity 0.15s ease;
+    }
+
+    .copy-button .icon-check {
+      display: none;
+      color: var(--accent-green);
+    }
+
+    .copy-button.copied {
+      background: rgba(52, 211, 153, 0.1);
+      color: var(--accent-green);
+    }
+
+    .copy-button.copied .icon-copy {
+      display: none;
+    }
+
+    .copy-button.copied .icon-check {
+      display: block;
+    }
+
+    /* Code Body */
+    .code-block-wrapper pre {
+      margin: 0;
+      padding: 18px 20px;
+      overflow-x: auto;
+      background: #1e1e1e;
+    }
+
+    .code-block-wrapper pre::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .code-block-wrapper pre::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 4px;
+    }
+
+    .code-block-wrapper code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: #d4d4d4;
+      white-space: pre;
+      tab-size: 4;
+      display: block;
+    }
+
+    /* Code line animation */
+    .code-line {
+      display: block;
+      opacity: 0;
+      transform: translateX(-6px);
+      animation: codeLineReveal 0.4s var(--ease-premium) forwards;
+    }
+
+    .code-line:nth-child(1) { animation-delay: 0.03s; }
+    .code-line:nth-child(2) { animation-delay: 0.06s; }
+    .code-line:nth-child(3) { animation-delay: 0.09s; }
+    .code-line:nth-child(4) { animation-delay: 0.12s; }
+    .code-line:nth-child(5) { animation-delay: 0.15s; }
+    .code-line:nth-child(6) { animation-delay: 0.18s; }
+    .code-line:nth-child(7) { animation-delay: 0.21s; }
+    .code-line:nth-child(8) { animation-delay: 0.24s; }
+    .code-line:nth-child(9) { animation-delay: 0.27s; }
+    .code-line:nth-child(10) { animation-delay: 0.3s; }
+    .code-line:nth-child(11) { animation-delay: 0.33s; }
+    .code-line:nth-child(12) { animation-delay: 0.36s; }
+    .code-line:nth-child(13) { animation-delay: 0.39s; }
+    .code-line:nth-child(14) { animation-delay: 0.42s; }
+    .code-line:nth-child(15) { animation-delay: 0.45s; }
+    .code-line:nth-child(n+16) { animation-delay: 0.48s; }
+
+    @keyframes codeLineReveal {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Syntax Highlighting - VS Code Dark+ */
+    .tok-kw { color: #569cd6; }
+    .tok-kw2 { color: #c586c0; }
+    .tok-str { color: #ce9178; }
+    .tok-num { color: #b5cea8; }
+    .tok-cmt { color: #6a9955; font-style: italic; }
+    .tok-fn { color: #dcdcaa; }
+    .tok-cls { color: #4ec9b0; }
+    .tok-var { color: #9cdcfe; }
+    .tok-param { color: #9cdcfe; }
+    .tok-op { color: #d4d4d4; }
+    .tok-punc { color: #d4d4d4; }
+    .tok-dec { color: #dcdcaa; }
+    .tok-bool { color: #569cd6; }
+    .tok-self { color: #569cd6; font-style: italic; }
+    .tok-prop { color: #9cdcfe; }
+    .tok-builtin { color: #4ec9b0; }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       FORMULA / MATH BLOCKS
+       ═══════════════════════════════════════════════════════════════════════ */
+    .formula-block {
+      padding: 14px 22px;
+      background: rgba(22, 22, 30, 0.8);
+      border-radius: 10px;
+      border-left: 3px solid var(--accent-purple);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      letter-spacing: 0.02em;
+      color: var(--accent-cyan);
+      overflow-x: auto;
+      box-shadow: inset 0 0 30px rgba(167, 139, 250, 0.03);
+      margin: 18px 0;
+      position: relative;
+      opacity: 0;
+      transform: scale(0.98);
+      animation: formulaEntrance 0.5s var(--ease-premium) 0.1s forwards;
+    }
+
+    .formula-block::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 3px;
+      height: 0;
+      background: var(--accent-purple);
+      border-radius: 0 0 2px 2px;
+      animation: formulaBorderGrow 0.4s ease-out forwards;
+    }
+
+    @keyframes formulaBorderGrow {
+      to { height: 100%; }
+    }
+
+    @keyframes formulaEntrance {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       BLOCKQUOTES
+       ═══════════════════════════════════════════════════════════════════════ */
+    blockquote {
+      padding: 14px 20px;
+      border-left: 3px solid var(--accent-blue);
+      background: rgba(96, 165, 250, 0.04);
+      border-radius: 0 6px 6px 0;
+      color: var(--text-secondary);
+      margin: 18px 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    blockquote::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 3px;
+      height: 0;
+      background: var(--accent-blue);
+      animation: blockquoteBorderGrow 0.5s ease-out forwards;
+    }
+
+    @keyframes blockquoteBorderGrow {
+      to { height: 100%; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       HORIZONTAL RULES
+       ═══════════════════════════════════════════════════════════════════════ */
+    hr {
+      height: 1px;
+      border: none;
+      background: linear-gradient(90deg, transparent, #27272a 15%, #27272a 85%, transparent);
+      margin: 36px 0;
+      transform: scaleX(0);
+      transform-origin: center;
+      animation: hrDraw 0.6s ease-out forwards;
+    }
+
+    @keyframes hrDraw {
+      to { transform: scaleX(1); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       CONCLUSION / HIGHLIGHT BOX
+       ═══════════════════════════════════════════════════════════════════════ */
+    .conclusion-box {
+      padding: 22px 26px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(96, 165, 250, 0.04), rgba(167, 139, 250, 0.04));
+      border: 1px solid rgba(96, 165, 250, 0.12);
+      position: relative;
+      margin: 28px 0;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: conclusionEntrance 0.6s var(--ease-premium) forwards;
+    }
+
+    .conclusion-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-pink));
+      background-size: 200% 100%;
+      animation: conclusionShimmer 4s linear infinite;
+    }
+
+    @keyframes conclusionShimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    @keyframes conclusionEntrance {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       MESSAGE ACTION BAR
+       ═══════════════════════════════════════════════════════════════════════ */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid var(--bg-surface-2);
+      opacity: 0;
+      transform: translateY(8px);
+      animation: actionBarEntrance 0.5s var(--ease-premium) 0.4s forwards;
+    }
+
+    @keyframes actionBarEntrance {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .action-button {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--text-tertiary);
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+      opacity: 0;
+      animation: buttonStagger 0.3s var(--ease-premium) forwards;
+    }
+
+    .action-button:nth-child(1) { animation-delay: 0.43s; }
+    .action-button:nth-child(2) { animation-delay: 0.46s; }
+    .action-button:nth-child(3) { animation-delay: 0.49s; }
+    .action-button:nth-child(5) { animation-delay: 0.52s; }
+    .action-button:nth-child(6) { animation-delay: 0.55s; }
+
+    @keyframes buttonStagger {
+      to { opacity: 1; }
+    }
+
+    .action-button svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .action-button:hover {
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--text-secondary);
+    }
+
+    .action-button:active {
+      transform: scale(0.88);
+    }
+
+    .action-button.active {
+      color: var(--accent-blue);
+    }
+
+    .action-button:focus-visible {
+      outline: 2px solid var(--accent-blue);
+      outline-offset: 2px;
+    }
+
+    /* Tooltip */
+    .action-button[data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: #2a2a2a;
+      color: var(--text-pure-white);
+      font-size: 0.68rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .action-button:hover[data-tip]::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Divider */
+    .action-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--bg-surface-2);
+      margin: 0 6px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       RESPONSIVE DESIGN
+       ═══════════════════════════════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .page-container {
+        padding: 24px 16px 100px;
+      }
+
+      .message-block {
+        gap: 14px;
+      }
+
+      .ai-avatar {
+        width: 28px;
+        height: 28px;
+      }
+
+      .ai-avatar svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      h1 {
+        font-size: 1.35rem;
+      }
+
+      h2 {
+        font-size: 1.1rem;
+        margin-top: 32px;
+      }
+
+      ol > li, ul > li {
+        padding-left: 26px;
+      }
+
+      .code-block-wrapper {
+        margin-left: -8px;
+        margin-right: -8px;
+        border-radius: 0;
+      }
+
+      .code-block-wrapper pre {
+        padding: 14px 16px;
+      }
+
+      .code-block-wrapper code {
+        font-size: 0.78rem;
+      }
+
+      .formula-block {
+        padding: 12px 16px;
+        font-size: 0.82rem;
+      }
+
+      .action-button {
+        width: 32px;
+        height: 32px;
+      }
+
+      /* Reduce animation distances */
+      .message-content > * {
+        transform: translateY(4px);
+      }
+
+      li {
+        transform: translateX(-6px);
+      }
+
+      .code-line {
+        transform: translateX(-4px);
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       ACCESSIBILITY - REDUCED MOTION
+       ═══════════════════════════════════════════════════════════════════════ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.2s !important;
+        animation-delay: 0s !important;
+        transition-duration: 0.2s !important;
+      }
+
+      .message-block,
+      .message-content > *,
+      li,
+      .code-line,
+      .formula-block,
+      .conclusion-box,
+      .action-bar,
+      .action-button {
+        transform: none !important;
+      }
+
+      h1 {
+        background-position: 0% 0 !important;
+      }
+
+      .conclusion-box::before {
+        animation: none !important;
+      }
+
+      .code-language::before {
+        animation: none !important;
+      }
+    }
+
+    /* Focus visible for all interactive elements */
+    button:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--accent-blue);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <div class="message-block">
+      <!-- AI Avatar -->
+      <div class="ai-avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+        </svg>
+      </div>
+
+      <!-- Message Content -->
+      <div class="message-content">
+        <h1>Neural Networks Explained</h1>
+
+        <p>Neural networks are computational models inspired by the biological neural networks of the human brain. They form the foundation of modern <strong>artificial intelligence (AI)</strong> and have revolutionized fields ranging from computer vision to natural language processing. These powerful systems learn patterns from data and make predictions with remarkable accuracy.</p>
+
+        <h2>Core Components</h2>
+
+        <ol>
+          <li><strong>Neurons (Nodes)</strong>
+            <ul>
+              <li>Basic processing units that receive, process, and transmit information</li>
+              <li>Each neuron has associated weights that determine the strength of connections</li>
+              <li>Apply activation functions to introduce non-linearity into the network</li>
+            </ul>
+          </li>
+          <li><strong>Layers</strong>
+            <ul>
+              <li><strong>Input Layer:</strong> Receives raw data (images, text, numbers)</li>
+              <li><strong>Hidden Layers:</strong> Extract and transform features progressively</li>
+              <li><strong>Output Layer:</strong> Produces final predictions or classifications</li>
+            </ul>
+          </li>
+          <li><strong>Activation Functions</strong>
+            <ul>
+              <li>Introduce non-linearity, enabling networks to learn complex patterns</li>
+              <li>Common functions include ReLU, Sigmoid, and Tanh</li>
+            </ul>
+            <div class="formula-block">ReLU: f(x) = max(0, x)</div>
+            <div class="formula-block">Sigmoid: f(x) = 1 / (1 + e<sup>-x</sup>)</div>
+          </li>
+        </ol>
+
+        <h2>How They Learn</h2>
+
+        <ol>
+          <li><strong>Forward Pass</strong>
+            <ul>
+              <li>Data flows through the network from input to output</li>
+              <li>Each layer transforms the data using learned weights</li>
+            </ul>
+            <div class="formula-block">output = activation(weights × input + bias)</div>
+          </li>
+          <li><strong>Loss Calculation</strong>
+            <ul>
+              <li>Compare predicted output with actual target values</li>
+              <li>Common loss functions: Mean Squared Error, Cross-Entropy</li>
+            </ul>
+          </li>
+          <li><strong>Backward Pass (Backpropagation)</strong>
+            <ul>
+              <li>Calculate gradients of the loss with respect to each weight</li>
+              <li>Propagate error signal backward through the network</li>
+              <li>Update weights using optimization algorithms like SGD or Adam</li>
+            </ul>
+          </li>
+        </ol>
+
+        <h2>Key Architectures</h2>
+
+        <ul>
+          <li><strong>Feedforward Neural Networks (FNNs):</strong> Simplest architecture with unidirectional data flow</li>
+          <li><strong>Convolutional Neural Networks (CNNs):</strong> Specialized for image and spatial data processing</li>
+          <li><strong>Recurrent Neural Networks (RNNs):</strong> Handle sequential data with memory capabilities</li>
+          <li><strong>Transformers:</strong> State-of-the-art for NLP, using attention mechanisms</li>
+        </ul>
+
+        <h2>Why They Work</h2>
+
+        <ul>
+          <li><strong>Hierarchical Feature Learning:</strong> Automatically discover representations at multiple abstraction levels</li>
+          <li><strong>Parallelization:</strong> Modern GPUs enable training on massive datasets efficiently</li>
+          <li><strong>Data-Driven:</strong> Performance improves with more training data and compute</li>
+        </ul>
+
+        <hr>
+
+        <h2>Example: Digit Recognition (MNIST Dataset)</h2>
+
+        <div class="code-block-wrapper" role="region" aria-label="Code example">
+          <div class="code-header">
+            <span class="code-language">python</span>
+            <button class="copy-button" aria-label="Copy code">
+              <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span class="copy-text">Copy code</span>
+            </button>
+          </div>
+          <pre><code><span class="code-line"><span class="tok-kw2">import</span> <span class="tok-var">tensorflow</span> <span class="tok-kw2">as</span> <span class="tok-var">tf</span></span>
+<span class="code-line"><span class="tok-kw2">from</span> <span class="tok-var">tensorflow.keras</span> <span class="tok-kw2">import</span> <span class="tok-var">layers</span><span class="tok-punc">,</span> <span class="tok-var">models</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-cmt"># Load and preprocess the MNIST dataset</span></span>
+<span class="code-line"><span class="tok-punc">(</span><span class="tok-var">x_train</span><span class="tok-punc">,</span> <span class="tok-var">y_train</span><span class="tok-punc">),</span> <span class="tok-punc">(</span><span class="tok-var">x_test</span><span class="tok-punc">,</span> <span class="tok-var">y_test</span><span class="tok-punc">)</span> <span class="tok-op">=</span> <span class="tok-var">tf</span><span class="tok-punc">.</span><span class="tok-var">keras</span><span class="tok-punc">.</span><span class="tok-var">datasets</span><span class="tok-punc">.</span><span class="tok-var">mnist</span><span class="tok-punc">.</span><span class="tok-fn">load_data</span><span class="tok-punc">()</span></span>
+<span class="code-line"><span class="tok-var">x_train</span> <span class="tok-op">=</span> <span class="tok-var">x_train</span><span class="tok-punc">.</span><span class="tok-fn">reshape</span><span class="tok-punc">(</span><span class="tok-num">-1</span><span class="tok-punc">,</span> <span class="tok-num">28</span><span class="tok-punc">,</span> <span class="tok-num">28</span><span class="tok-punc">,</span> <span class="tok-num">1</span><span class="tok-punc">)</span> <span class="tok-op">/</span> <span class="tok-num">255.0</span></span>
+<span class="code-line"><span class="tok-var">x_test</span> <span class="tok-op">=</span> <span class="tok-var">x_test</span><span class="tok-punc">.</span><span class="tok-fn">reshape</span><span class="tok-punc">(</span><span class="tok-num">-1</span><span class="tok-punc">,</span> <span class="tok-num">28</span><span class="tok-punc">,</span> <span class="tok-num">28</span><span class="tok-punc">,</span> <span class="tok-num">1</span><span class="tok-punc">)</span> <span class="tok-op">/</span> <span class="tok-num">255.0</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-cmt"># Build a Convolutional Neural Network</span></span>
+<span class="code-line"><span class="tok-var">model</span> <span class="tok-op">=</span> <span class="tok-var">models</span><span class="tok-punc">.</span><span class="tok-fn">Sequential</span><span class="tok-punc">([</span></span>
+<span class="code-line">    <span class="tok-var">layers</span><span class="tok-punc">.</span><span class="tok-fn">Conv2D</span><span class="tok-punc">(</span><span class="tok-num">32</span><span class="tok-punc">,</span> <span class="tok-punc">(</span><span class="tok-num">3</span><span class="tok-punc">,</span> <span class="tok-num">3</span><span class="tok-punc">),</span> <span class="tok-var">activation</span><span class="tok-op">=</span><span class="tok-str">'relu'</span><span class="tok-punc">,</span> <span class="tok-var">input_shape</span><span class="tok-op">=</span><span class="tok-punc">(</span><span class="tok-num">28</span><span class="tok-punc">,</span> <span class="tok-num">28</span><span class="tok-punc">,</span> <span class="tok-num">1</span><span class="tok-punc">)),</span></span>
+<span class="code-line">    <span class="tok-var">layers</span><span class="tok-punc">.</span><span class="tok-fn">MaxPooling2D</span><span class="tok-punc">((</span><span class="tok-num">2</span><span class="tok-punc">,</span> <span class="tok-num">2</span><span class="tok-punc">)),</span></span>
+<span class="code-line">    <span class="tok-var">layers</span><span class="tok-punc">.</span><span class="tok-fn">Conv2D</span><span class="tok-punc">(</span><span class="tok-num">64</span><span class="tok-punc">,</span> <span class="tok-punc">(</span><span class="tok-num">3</span><span class="tok-punc">,</span> <span class="tok-num">3</span><span class="tok-punc">),</span> <span class="tok-var">activation</span><span class="tok-op">=</span><span class="tok-str">'relu'</span><span class="tok-punc">),</span></span>
+<span class="code-line">    <span class="tok-var">layers</span><span class="tok-punc">.</span><span class="tok-fn">MaxPooling2D</span><span class="tok-punc">((</span><span class="tok-num">2</span><span class="tok-punc">,</span> <span class="tok-num">2</span><span class="tok-punc">)),</span></span>
+<span class="code-line">    <span class="tok-var">layers</span><span class="tok-punc">.</span><span class="tok-fn">Flatten</span><span class="tok-punc">(),</span></span>
+<span class="code-line">    <span class="tok-var">layers</span><span class="tok-punc">.</span><span class="tok-fn">Dense</span><span class="tok-punc">(</span><span class="tok-num">128</span><span class="tok-punc">,</span> <span class="tok-var">activation</span><span class="tok-op">=</span><span class="tok-str">'relu'</span><span class="tok-punc">),</span></span>
+<span class="code-line">    <span class="tok-var">layers</span><span class="tok-punc">.</span><span class="tok-fn">Dropout</span><span class="tok-punc">(</span><span class="tok-num">0.5</span><span class="tok-punc">),</span></span>
+<span class="code-line">    <span class="tok-var">layers</span><span class="tok-punc">.</span><span class="tok-fn">Dense</span><span class="tok-punc">(</span><span class="tok-num">10</span><span class="tok-punc">,</span> <span class="tok-var">activation</span><span class="tok-op">=</span><span class="tok-str">'softmax'</span><span class="tok-punc">)</span></span>
+<span class="code-line"><span class="tok-punc">])</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-cmt"># Compile and train the model</span></span>
+<span class="code-line"><span class="tok-var">model</span><span class="tok-punc">.</span><span class="tok-fn">compile</span><span class="tok-punc">(</span><span class="tok-var">optimizer</span><span class="tok-op">=</span><span class="tok-str">'adam'</span><span class="tok-punc">,</span></span>
+<span class="code-line">              <span class="tok-var">loss</span><span class="tok-op">=</span><span class="tok-str">'sparse_categorical_crossentropy'</span><span class="tok-punc">,</span></span>
+<span class="code-line">              <span class="tok-var">metrics</span><span class="tok-op">=</span><span class="tok-punc">[</span><span class="tok-str">'accuracy'</span><span class="tok-punc">])</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-var">model</span><span class="tok-punc">.</span><span class="tok-fn">fit</span><span class="tok-punc">(</span><span class="tok-var">x_train</span><span class="tok-punc">,</span> <span class="tok-var">y_train</span><span class="tok-punc">,</span> <span class="tok-var">epochs</span><span class="tok-op">=</span><span class="tok-num">5</span><span class="tok-punc">,</span> <span class="tok-var">validation_split</span><span class="tok-op">=</span><span class="tok-num">0.1</span><span class="tok-punc">)</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-cmt"># Evaluate on test data</span></span>
+<span class="code-line"><span class="tok-var">test_loss</span><span class="tok-punc">,</span> <span class="tok-var">test_acc</span> <span class="tok-op">=</span> <span class="tok-var">model</span><span class="tok-punc">.</span><span class="tok-fn">evaluate</span><span class="tok-punc">(</span><span class="tok-var">x_test</span><span class="tok-punc">,</span> <span class="tok-var">y_test</span><span class="tok-punc">)</span></span>
+<span class="code-line"><span class="tok-fn">print</span><span class="tok-punc">(</span><span class="tok-str">f'Test accuracy: </span><span class="tok-punc">{</span><span class="tok-var">test_acc</span><span class="tok-op">:</span><span class="tok-str">.4f</span><span class="tok-punc">}</span><span class="tok-str">'</span><span class="tok-punc">)</span></span></code></pre>
+        </div>
+
+        <h2>Challenges</h2>
+
+        <ul>
+          <li><strong>Overfitting:</strong> Models may memorize training data rather than learning generalizable patterns</li>
+          <li><strong>Computational Cost:</strong> Training large networks requires significant GPU resources and time</li>
+          <li><strong>Black Box Nature:</strong> Difficult to interpret why networks make specific predictions</li>
+          <li><strong>Data Requirements:</strong> Deep learning typically needs large amounts of labeled training data</li>
+        </ul>
+
+        <div class="conclusion-box">
+          <p>Neural networks have fundamentally transformed <strong>artificial intelligence</strong>, enabling breakthroughs in image recognition, language understanding, game playing, and scientific discovery. As architectures continue to evolve and computing power increases, neural networks will remain at the forefront of AI innovation, pushing the boundaries of what machines can learn and achieve.</p>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+          <button class="action-button" data-tip="Copy" aria-label="Copy response">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+          <button class="action-button" data-tip="Good response" aria-label="Thumbs up">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+            </svg>
+          </button>
+          <button class="action-button" data-tip="Bad response" aria-label="Thumbs down">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+            </svg>
+          </button>
+          <div class="action-divider"></div>
+          <button class="action-button" data-tip="Regenerate" aria-label="Regenerate response">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
+          <button class="action-button" data-tip="Share" aria-label="Share response">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Copy button functionality for code blocks
+    document.querySelectorAll('.copy-button').forEach(button => {
+      button.addEventListener('click', async () => {
+        const codeBlock = button.closest('.code-block-wrapper');
+        const code = codeBlock.querySelector('code');
+        const textContent = code.textContent;
+
+        try {
+          await navigator.clipboard.writeText(textContent);
+
+          // Update button state
+          button.classList.add('copied');
+          button.querySelector('.copy-text').textContent = 'Copied!';
+
+          // Revert after 2.2 seconds
+          setTimeout(() => {
+            button.classList.remove('copied');
+            button.querySelector('.copy-text').textContent = 'Copy code';
+          }, 2200);
+        } catch (err) {
+          console.error('Failed to copy:', err);
+        }
+      });
+    });
+
+    // Copy entire response functionality
+    const copyResponseButton = document.querySelector('.action-bar .action-button[aria-label="Copy response"]');
+    if (copyResponseButton) {
+      copyResponseButton.addEventListener('click', async () => {
+        const content = document.querySelector('.message-content');
+        const textContent = content.textContent;
+
+        try {
+          await navigator.clipboard.writeText(textContent);
+          copyResponseButton.classList.add('active');
+
+          setTimeout(() => {
+            copyResponseButton.classList.remove('active');
+          }, 1500);
+        } catch (err) {
+          console.error('Failed to copy:', err);
+        }
+      });
+    }
+
+    // Toggle active state for thumbs up/down
+    document.querySelectorAll('.action-button[aria-label="Thumbs up"], .action-button[aria-label="Thumbs down"]').forEach(button => {
+      button.addEventListener('click', () => {
+        // Remove active from sibling thumbs buttons
+        const thumbsButtons = document.querySelectorAll('.action-button[aria-label="Thumbs up"], .action-button[aria-label="Thumbs down"]');
+        thumbsButtons.forEach(btn => btn.classList.remove('active'));
+
+        // Toggle active on clicked button
+        button.classList.add('active');
+      });
+    });
+
+    // Intersection Observer for scroll-triggered animations (optional enhancement)
+    if ('IntersectionObserver' in window) {
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = 'running';
+            observer.unobserve(entry.target);
+          }
+        });
+      }, observerOptions);
+
+      // Observe elements that should animate on scroll
+      document.querySelectorAll('hr').forEach(el => {
+        el.style.animationPlayState = 'paused';
+        observer.observe(el);
+      });
+    }
+  </script>
+</body>
+</html>

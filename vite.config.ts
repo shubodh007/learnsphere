@@ -18,4 +18,38 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Code splitting configuration for optimal loading
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate Monaco editor which is very large
+          monaco: ["@monaco-editor/react"],
+          // Separate vendor dependencies
+          vendor: [
+            "react",
+            "react-dom",
+            "react-router-dom",
+            "@tanstack/react-query",
+            "framer-motion",
+          ],
+          // Separate Radix UI components used frequently
+          radix: [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-tabs",
+          ],
+        },
+      },
+    },
+    // Optimize build size and speed
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: mode === "production",
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
 }));

@@ -1,32 +1,140 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Bookmark, ExternalLink } from 'lucide-react';
+import { Search, Bookmark, BookmarkCheck, ExternalLink, Loader2 } from 'lucide-react';
 import { EmptyState, emptyStateConfig } from '@/components/EmptyState';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import type { VideoSearchResult } from '@/lib/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
+import type { VideoSearchResult, SavedVideo } from '@/lib/types';
 
 export default function Videos() {
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<VideoSearchResult[]>([]);
+  const [savedVideos, setSavedVideos] = useState<Set<string>>(new Set());
   const [searching, setSearching] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<VideoSearchResult | null>(null);
+  const [savingVideo, setSavingVideo] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Load saved videos on mount
+  useEffect(() => {
+    if (!user) return;
+
+    const loadSavedVideos = async () => {
+      const { data } = await supabase
+        .from('saved_videos')
+        .select('youtube_video_id')
+        .eq('user_id', user.id);
+
+      if (data) {
+        setSavedVideos(new Set(data.map((v: { youtube_video_id: string }) => v.youtube_video_id)));
+      }
+    };
+
+    loadSavedVideos();
+  }, [user]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
     setSearching(true);
-    // TODO: call youtube-search edge function
-    toast({
-      title: 'Backend not connected',
-      description: 'Enable Lovable Cloud to search YouTube videos.',
-      variant: 'destructive',
-    });
-    setSearching(false);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: 'Not authenticated', description: 'Please log in to search videos.', variant: 'destructive' });
+        setSearching(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-search?q=${encodeURIComponent(query.trim())}&maxResults=12`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to search videos');
+      }
+
+      const data = await response.json();
+      setResults(data.videos || []);
+
+      if (data.videos?.length === 0) {
+        toast({ title: 'No results', description: 'Try a different search term.' });
+      }
+    } catch (error) {
+      console.error('Video search error:', error);
+      toast({
+        title: 'Search failed',
+        description: error instanceof Error ? error.message : 'Failed to search videos',
+        variant: 'destructive',
+      });
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSaveVideo = async (video: VideoSearchResult) => {
+    if (!user) {
+      toast({ title: 'Not authenticated', description: 'Please log in to save videos.', variant: 'destructive' });
+      return;
+    }
+
+    const isAlreadySaved = savedVideos.has(video.videoId);
+    setSavingVideo(video.videoId);
+
+    try {
+      if (isAlreadySaved) {
+        // Remove from saved
+        const { error } = await supabase
+          .from('saved_videos')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('youtube_video_id', video.videoId);
+
+        if (error) throw error;
+
+        setSavedVideos((prev) => {
+          const next = new Set(prev);
+          next.delete(video.videoId);
+          return next;
+        });
+        toast({ title: 'Video removed from saved' });
+      } else {
+        // Save video
+        const { error } = await supabase.from('saved_videos').insert({
+          user_id: user.id,
+          youtube_video_id: video.videoId,
+          title: video.title,
+          channel_title: video.channelName,
+          thumbnail_url: video.thumbnail,
+        });
+
+        if (error) throw error;
+
+        setSavedVideos((prev) => new Set([...prev, video.videoId]));
+        toast({ title: 'Video saved!' });
+      }
+    } catch (error) {
+      console.error('Save video error:', error);
+      toast({
+        title: 'Save failed',
+        description: error instanceof Error ? error.message : 'Failed to save video',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingVideo(null);
+    }
   };
 
   return (
@@ -48,7 +156,7 @@ export default function Videos() {
           />
         </div>
         <Button type="submit" disabled={searching} className="gradient-bg border-0">
-          Search
+          {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Search'}
         </Button>
       </form>
 
@@ -98,11 +206,17 @@ export default function Videos() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    toast({ title: 'Backend not connected', description: 'Enable Lovable Cloud to save videos.', variant: 'destructive' });
-                  }}
+                  onClick={() => handleSaveVideo(selectedVideo)}
+                  disabled={savingVideo === selectedVideo.videoId}
                 >
-                  <Bookmark className="h-4 w-4 mr-2" /> Save
+                  {savingVideo === selectedVideo.videoId ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : savedVideos.has(selectedVideo.videoId) ? (
+                    <BookmarkCheck className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Bookmark className="h-4 w-4 mr-2" />
+                  )}
+                  {savedVideos.has(selectedVideo.videoId) ? 'Saved' : 'Save'}
                 </Button>
                 <Button
                   variant="outline"

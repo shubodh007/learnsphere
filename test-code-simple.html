@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Code Generation</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Test Code Generation Function</h1>
+
+    <div>
+        <label>Task: <input type="text" id="task" value="sort an array" style="width: 300px;"></label><br>
+        <label>Language: <input type="text" id="language" value="JavaScript" style="width: 150px;"></label><br>
+        <label>Optimization:
+            <select id="optimization">
+                <option value="bruteforce">Bruteforce</option>
+                <option value="optimized" selected>Optimized</option>
+                <option value="highly-optimized">Highly Optimized</option>
+            </select>
+        </label><br>
+        <button onclick="testCodeGen()">Generate Code</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="result"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://erpfdokhdjrgcywiytco.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycGZkb2toZGpyZ2N5d2l5dGNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzEwMzEsImV4cCI6MjA4OTg0NzAzMX0.PihxhB5jL0VYOJfqNmAeO1PhHIzAs8TmQLxxwcn4lJU';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function testCodeGen() {
+            const statusDiv = document.getElementById('status');
+            const resultDiv = document.getElementById('result');
+
+            statusDiv.innerHTML = '<p>Checking authentication...</p>';
+
+            // Check auth first
+            const { data: { session }, error: authError } = await supabase.auth.getSession();
+
+            if (authError) {
+                statusDiv.innerHTML = `<p class="error">Auth Error: ${authError.message}</p>`;
+                return;
+            }
+
+            if (!session) {
+                statusDiv.innerHTML = '<p class="error">Not authenticated. Please sign in first.</p>';
+                return;
+            }
+
+            statusDiv.innerHTML = `<p class="success">✓ Authenticated as: ${session.user.email}</p><p>Generating code...</p>`;
+
+            const task = document.getElementById('task').value;
+            const language = document.getElementById('language').value;
+            const optimization = document.getElementById('optimization').value;
+
+            const startTime = Date.now();
+
+            try {
+                const { data, error } = await supabase.functions.invoke('generate-code', {
+                    body: { topic: task, language, optimization }
+                });
+
+                const duration = Date.now() - startTime;
+
+                if (error) {
+                    statusDiv.innerHTML += `<p class="error">✗ Failed in ${duration}ms</p>`;
+                    resultDiv.innerHTML = `<h3>Error Details:</h3><pre>${JSON.stringify(error, null, 2)}</pre>`;
+                    console.error('Full error:', error);
+                    return;
+                }
+
+                statusDiv.innerHTML += `<p class="success">✓ Success in ${duration}ms</p>`;
+                resultDiv.innerHTML = `
+                    <h3>Result:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <h3>Generated Code:</h3>
+                    <pre>${data.code || 'No code generated'}</pre>
+                `;
+
+            } catch (err) {
+                const duration = Date.now() - startTime;
+                statusDiv.innerHTML += `<p class="error">✗ Exception in ${duration}ms</p>`;
+                resultDiv.innerHTML = `<h3>Exception:</h3><pre>${err.message}\n\n${err.stack}</pre>`;
+                console.error('Exception:', err);
+            }
+        }
+    </script>
+</body>
+</html>

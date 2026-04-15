@@ -11,6 +11,59 @@ export interface Profile {
   updated_at: string;
 }
 
+// Enhanced Lesson Section Types (used in structured lessons)
+export interface LessonCodeBlock {
+  language: string;
+  caption?: string;
+  src: string;
+}
+
+export interface LessonCommonMistake {
+  mistake: string;
+  fix: string;
+}
+
+export interface LessonBullet {
+  label: string;
+  detail: string;
+}
+
+export interface LessonSection {
+  heading: string;
+  body: string;
+  bullets: LessonBullet[];
+  code?: LessonCodeBlock;
+  deep_dive?: string;
+  common_mistakes?: LessonCommonMistake[];
+}
+
+export interface StructuredLessonMetadata {
+  generated_title?: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+  sections?: LessonSection[];
+  structured_format?: boolean;
+  validation?: {
+    isValid: boolean;
+    score: number;
+    issues: string[];
+  };
+  generation_strategy?: {
+    route?: string;
+    timeout_ms?: number;
+    continuation_count?: number;
+    regeneration_count?: number;
+    quiz_provider?: string | null;
+  };
+  quality_gate?: {
+    passed: boolean;
+    reasons: string[];
+  };
+}
+
 export interface Lesson {
   id: string;
   user_id: string;
@@ -20,7 +73,8 @@ export interface Lesson {
   summary: string | null;
   key_takeaways: string[] | null;
   examples: unknown[] | null;
-  questions: unknown[] | null;
+  questions: string[] | null;
+  quiz_questions: LessonQuizQuestion[] | null;
   difficulty_level: 'beginner' | 'intermediate' | 'advanced';
   category_id: string | null;
   is_public: boolean;
@@ -28,8 +82,13 @@ export interface Lesson {
   like_count: number;
   ai_model_used: string | null;
   generation_time_ms: number | null;
+  estimated_read_time_minutes: number | null;
+  quality_flag: 'ok' | 'below_threshold' | 'regenerated' | null;
+  has_code_examples: boolean | null;
+  has_deep_dives: boolean | null;
+  word_count: number | null;
   version: number;
-  metadata: Record<string, unknown>;
+  metadata: StructuredLessonMetadata | Record<string, unknown>;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
@@ -132,18 +191,64 @@ export interface ActivityLog {
 }
 
 export interface GenerateLessonResponse {
+  id: string | null;
   title: string;
+  topic: string;
   slug: string;
   summary: string;
   content: string;
+  sections: LessonSection[];
   key_takeaways: string[];
-  examples: string[];
   questions: string[];
+  quiz_questions: LessonQuizQuestion[];
   difficulty: 'beginner' | 'intermediate' | 'advanced';
+  estimated_read_time_minutes: number;
+  section_count: number;
+  has_code_examples: boolean;
+  has_deep_dives: boolean;
+  generation_time_ms: number;
+  generationTimeMs?: number;
+  model_used: string;
+  cached: boolean;
+  quality_flag: 'ok' | 'below_threshold' | 'regenerated';
+  similar_lesson: { slug: string; topic: string } | null;
+  rate_limit_remaining?: number;
+  rate_limit_reset?: string | null;
+}
+
+export interface LessonQuizQuestion {
+  question: string;
+  options: [string, string, string, string];
+  correctIndex: number;
+  explanation: string;
+  sectionRef?: string;
+  sectionHeading?: string;
+}
+
+export interface GenerateLessonQuizResponse {
+  questions: LessonQuizQuestion[];
+  provider: 'anthropic' | 'openrouter';
+}
+
+export type OptimizationLevel = 'bruteforce' | 'optimized' | 'highly-optimized';
+
+export type GenerationMode = 'fast' | 'deep';
+
+export interface GenerateCodeRequest {
+  topic: string;
+  language?: string;
+  optimization?: OptimizationLevel;
+  mode?: GenerationMode;
 }
 
 export interface GenerateCodeResponse {
   code: string;
   language: string;
+  summary: string;
   explanation: string;
+  complexity: string;
+  debuggingTips: string[];
+  optimization: OptimizationLevel;
+  mode: GenerationMode;
+  generationTimeMs: number;
 }
